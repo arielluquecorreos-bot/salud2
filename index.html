@@ -371,14 +371,15 @@ function importarDesdeSheets(){
   showLoading('Importando desde Sheets...');
   // Usar JSONP para evitar problemas de CORS en celular
   window._jsonpCallback=function(j){
-    // Limpiar el script tag
     const old=document.getElementById('jsonp-import');
     if(old) old.remove();
+    clearTimeout(window._jsonpTimeout);
     delete window._jsonpCallback;
     hideLoading();
-    if(!j||!j.ok){toast('Error al conectar con Sheets');return}
+    if(!j){alert('Error: respuesta vacía de Sheets');return}
+    if(!j.ok){alert('Error de Sheets: '+(j.error||'desconocido'));return}
     const remotos=(j.datos||[]).map(d=>({...d,fecha:normF(d.fecha)}));
-    if(!remotos.length){toast('No hay datos en Sheets');return}
+    if(!remotos.length){alert('Sheets respondió pero sin datos');return}
     const mapa={};
     for(const d of datos) mapa[String(d.id)]=d;
     let agregados=0;
@@ -386,7 +387,7 @@ function importarDesdeSheets(){
     datos=Object.values(mapa).sort((a,b)=>normF(b.fecha).localeCompare(normF(a.fecha)));
     datos=deduplicar(datos);
     guardarLocal();setSyncDot('ok');
-    toast('✓ '+agregados+' nuevos importados ('+datos.length+' total)');
+    alert('✓ Importados: '+remotos.length+' registros de Sheets\nNuevos: '+agregados+'\nTotal local: '+datos.length);
     renderInicio();renderConfig();
   };
   // Timeout por si no responde
